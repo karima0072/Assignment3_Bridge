@@ -1,0 +1,113 @@
+@startuml
+!pragma layout smetana
+title Multi-Channel Notification Gateway - Bridge Pattern
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontSize 13
+
+package notification {
+    abstract class Notification <<Abstraction>> {
+        # sender : MessageSender
+        # Notification(sender : MessageSender)
+        + setSender(sender : MessageSender) : void
+        + {abstract} send(recipient : String, message : String) : void
+    }
+
+    class UrgentNotification <<Refined Abstraction>> {
+        - fallbackSender : MessageSender
+        + UrgentNotification(sender : MessageSender)
+        + setFallbackSender(fallbackSender : MessageSender) : void
+        + send(recipient : String, message : String) : void
+    }
+
+    class EncryptedNotification <<Refined Abstraction>> {
+        + EncryptedNotification(sender : MessageSender)
+        + send(recipient : String, message : String) : void
+    }
+
+    class ScheduledBatchNotification <<Refined Abstraction>> {
+        - recipients : List<String> {final}
+        - total : int
+        - successful : int
+        - failed : int
+        + ScheduledBatchNotification(sender : MessageSender, recipients : List<String>)
+        + send(recipient : String, message : String) : void
+        + getTotal() : int
+        + getSuccessful() : int
+        + getFailed() : int
+    }
+
+    class MarketingNotification <<Refined Abstraction>> {
+        + MarketingNotification(sender : MessageSender)
+        + send(recipient : String, message : String) : void
+    }
+}
+
+package sender {
+    interface MessageSender <<Implementor>> {
+        + sendMessage(recipient : String, title : String, body : String) : boolean
+        + isAvailable() : boolean
+        + getChannelName() : String
+    }
+
+    class TelegramMessageSender <<Concrete Implementor>> {
+        - available : boolean = true
+        + TelegramMessageSender()
+        + setAvailable(available : boolean) : void
+    }
+
+    class EmailMessageSender <<Concrete Implementor>> {
+        - available : boolean = true
+        + EmailMessageSender()
+        + setAvailable(available : boolean) : void
+    }
+
+    class SmsMessageSender <<Concrete Implementor>> {
+        - {static} MAX_BODY_LENGTH : int = 160 {final}
+        - available : boolean = true
+        + SmsMessageSender()
+        + setAvailable(available : boolean) : void
+    }
+
+    class KafkaEventSender <<Concrete Implementor>> {
+        - available : boolean = true
+        + KafkaEventSender()
+        + setAvailable(available : boolean) : void
+    }
+
+    class PushNotificationSender <<Concrete Implementor>> {
+        - available : boolean = true
+        + PushNotificationSender()
+        + setAvailable(available : boolean) : void
+    }
+}
+
+class Main {
+    + {static} main(args : String[]) : void
+}
+
+Notification <|-- UrgentNotification
+Notification <|-- EncryptedNotification
+Notification <|-- ScheduledBatchNotification
+Notification <|-- MarketingNotification
+
+MessageSender <|.. TelegramMessageSender
+MessageSender <|.. EmailMessageSender
+MessageSender <|.. SmsMessageSender
+MessageSender <|.. KafkaEventSender
+MessageSender <|.. PushNotificationSender
+
+Notification --> MessageSender : Bridge: has-a sender
+UrgentNotification --> "0..1" MessageSender : optional fallbackSender
+Main ..> Notification : configures and runs demos
+
+legend bottom
+  + public    # protected    - private
+  All concrete senders implement the three MessageSender methods.
+  Their repeated method signatures are shown once in the interface.
+  Refined abstractions inherit setSender() and the sender field.
+  Plain associations are used because providers can be shared and replaced.
+endlegend
+@enduml
