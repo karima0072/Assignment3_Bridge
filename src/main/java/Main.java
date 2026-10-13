@@ -1,5 +1,7 @@
+import notification.MarketingNotification;
 import notification.UrgentNotification;
 import sender.EmailMessageSender;
+import sender.PushNotificationSender;
 import sender.SmsMessageSender;
 import sender.TelegramMessageSender;
 
@@ -27,5 +29,18 @@ public class Main {
         UrgentNotification fallbackNotification = new UrgentNotification(primaryTelegram);
         fallbackNotification.setFallbackSender(fallbackSms);
         fallbackNotification.send("+77001234567", "Deadline is today. Submit now.");
+
+        System.out.println("\n=== Independent extension: Marketing + Push ===");
+        PushNotificationSender push = new PushNotificationSender();
+        MarketingNotification marketingPush = new MarketingNotification(push);
+        marketingPush.send("student-device", "Save 20% on our Java course.");
+
+        System.out.println("\n=== Independent extension: Marketing + Email ===");
+        MarketingNotification marketingEmail = new MarketingNotification(email);
+        marketingEmail.send("student@example.com", "Join our programming workshop.");
+
+        System.out.println("\n=== Independent extension: Urgent + Push ===");
+        UrgentNotification urgentPush = new UrgentNotification(push);
+        urgentPush.send("student-device", "Your assignment deadline is approaching.");
     }
 }
